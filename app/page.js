@@ -13,7 +13,6 @@ export default function Login() {
     e.preventDefault(); setErr(""); setBusy(true);
     try {
       const { data } = await api.post("/auth/login", f);
-      localStorage.setItem("user", data?.name ? data?.name : "Arun")
       router.push(data.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
       setErr(await getErrorMessage(err));

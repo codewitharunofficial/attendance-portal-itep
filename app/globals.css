@@ -104,3 +104,25 @@ td input{padding:8px 10px}
   .who span.nm{display:none}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- loading screen (customizable via LoadingScreen props + the palette above) ---- */
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:60px 20px;text-align:center}
+.loading-screen.full{min-height:60vh}
+.loading-mark{position:relative;width:64px;height:64px;display:grid;place-items:center}
+.loading-ring{position:absolute;inset:0;border-radius:50%;border:3px solid var(--brand-soft);border-top-color:var(--brand-2);animation:spin .9s linear infinite}
+.loading-logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;font-weight:700;font-family:var(--serif);
+  background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 4px 10px rgba(20,87,74,.3)}
+.loading-msg{font-weight:600;color:var(--ink);margin:0}
+.loading-sub{color:var(--mute);font-size:.88rem;margin:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;border-radius:50%;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;
+  animation:spin .7s linear infinite;vertical-align:-2px;margin-right:7px}
+button.ghost .spinner,button.danger .spinner{border-color:var(--line);border-top-color:var(--brand)}
+
+/* ---- multi-session attendance form ---- */
+.session{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;background:#fbfaf6}
+.session-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.session-h b{font-size:.8rem;color:var(--brand);text-transform:uppercase;letter-spacing:.06em}
+.remove-x{background:none;border:none;color:var(--bad);font-size:1.05rem;line-height:1;cursor:pointer;padding:3px 8px;box-shadow:none}
+.remove-x:hover{background:var(--bad-soft);border-radius:6px;transform:none}
+.cap-note{font-size:.84rem;color:var(--mute)}

@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Nav from "../components/Nav";
+import LoadingScreen, { Spinner } from "../components/LoadingScreen";
 import { api, getErrorMessage, downloadFile } from "@/lib/api-client";
 
 const thisMonth = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }).slice(0, 7);
@@ -12,7 +13,8 @@ export default function Admin() {
   const [users, setUsers] = useState([]), [pending, setPending] = useState([]);
   const [f, setF] = useState(blank), [month, setMonth] = useState(thisMonth());
   const [msg, setMsg] = useState(null), [edit, setEdit] = useState({}), [rates, setRates] = useState({});
-  const [loadErr, setLoadErr] = useState(""), [loading, setLoading] = useState(true), [dl, setDl] = useState(null);
+  const [loadErr, setLoadErr] = useState(""), [loading, setLoading] = useState(true);
+  const [dl, setDl] = useState(null); // `${userId}:excel` or `${userId}:schedule` while a download is in flight
 
   const load = useCallback(async () => {
     setLoadErr("");
@@ -50,10 +52,13 @@ export default function Admin() {
     const { ok, j } = await call("/admin/generate", "post", { month });
     ok ? say(true, `Built ${j.generated} report(s) for ${j.month}.`) : say(false, j.error);
   }
-  async function download(u) {
-    setDl(u._id); setMsg(null);
-    try { await downloadFile("/reports", { userId: u._id, month }); }
-    catch (err) { say(false, await getErrorMessage(err)); }
+  async function download(u, kind) {
+    const key = `${u._id}:${kind}`;
+    setDl(key); setMsg(null);
+    try {
+      if (kind === "excel") await downloadFile("/reports", { userId: u._id, month });
+      else await downloadFile("/admin/schedule", { userId: u._id, month });
+    } catch (err) { say(false, await getErrorMessage(err)); }
     finally { setDl(null); }
   }
   const val = (u, k) => edit[u._id]?.[k] ?? u[k] ?? "";
@@ -64,7 +69,7 @@ export default function Admin() {
     router.push("/");
   }
 
-  if (loading) return <main><p className="sub">Loading…</p></main>;
+  if (loading) return <LoadingScreen message="Loading the admin panel…" subtitle="Fetching counsellors and requests." />;
   if (loadErr) return (
     <main><div className="panel" style={{ textAlign: "center" }}>
       <h2>Couldn’t load the admin panel</h2><p className="sub" style={{ margin: "8px 0 18px" }}>{loadErr}</p>
@@ -116,14 +121,14 @@ export default function Admin() {
 
         <div className="panel">
           <div className="panel-h">
-            <div><h2>Counsellors</h2><p className="sub">Edit rates inline, then save the row.</p></div>
+            <div><h2>Counsellors</h2><p className="sub">Edit rates inline, then save the row. Excel is the bill; Schedule is the finance-ready Approved Schedule, built from the same month’s attendance.</p></div>
             <div className="row">
               <input type="month" value={month} onChange={(e) => setMonth(e.target.value)} style={{ width: 165 }} />
               <button type="button" className="ghost" onClick={generate}>Build reports for month</button>
             </div>
           </div>
           <div className="scroll"><table>
-            <thead><tr><th>Name</th><th>Email</th><th>Programme</th><th>Major / hr</th><th>Minor / hr</th><th>New password</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Programme</th><th>Major / hr</th><th>Minor / hr</th><th>New password</th><th>Reports for {month}</th></tr></thead>
             <tbody>
               {users.map((u) => (
                 <tr key={u._id}>
@@ -135,7 +140,12 @@ export default function Admin() {
                   <td><input placeholder="leave blank to keep" value={edit[u._id]?.password ?? ""} onChange={(e) => set(u, "password", e.target.value)} /></td>
                   <td><div className="row">
                     <button type="button" className="sm" disabled={!edit[u._id]} onClick={() => save(u)}>Save</button>
-                    <button type="button" className="ghost sm" disabled={dl === u._id} onClick={() => download(u)}>{dl === u._id ? "Preparing…" : "Excel"}</button>
+                    <button type="button" className="ghost sm" disabled={dl === `${u._id}:excel`} onClick={() => download(u, "excel")}>
+                      {dl === `${u._id}:excel` && <Spinner size={12} />}{dl === `${u._id}:excel` ? "Preparing…" : "Excel"}
+                    </button>
+                    <button type="button" className="ghost sm" disabled={dl === `${u._id}:schedule`} onClick={() => download(u, "schedule")}>
+                      {dl === `${u._id}:schedule` && <Spinner size={12} />}{dl === `${u._id}:schedule` ? "Preparing…" : "Schedule"}
+                    </button>
                   </div></td>
                 </tr>))}
               {!users.length && <tr><td colSpan="7" className="empty">No counsellors yet. Approve a request or add one above.</td></tr>}
