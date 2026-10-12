@@ -91,3 +91,12 @@ Travel is a single trip to the office, not one trip per session. "Kilometres tra
 now a single field on the attendance form (not per session) — fill it once, regardless of how many
 sessions you log that day. `lib/bill.js` also takes the **max** km across a date's sessions (not a
 sum) as a safety net, so even older data or a second same-day submission can't double-charge conveyance.
+
+## Bill layout for multi-session days
+Matches the real submitted IGNOU bills: **every session gets its own row** (time, classes, course code,
+topic, students, counselling charge), and when a date has several sessions the **S.No, Date, Conveyance
+and Total cells are merged down those rows** and shown once. Conveyance is charged once per date;
+the date's Total = its counselling charges + that one conveyance. The table is sized to exactly the
+number of sessions (rows are added to / removed from the template's 12-row block, and everything
+below it — Total, words, signatures — is moved with it). See `lib/bill.js` and `lib/report.js`.
+"No of Classes" now equals the session's hours (2h session = 2 classes), as on the real bills.
